@@ -1,11 +1,12 @@
 {-# LANGUAGE DeriveFunctor #-}
 module SimpleCalc where
 
+-- | Простое арифметическое выражение с переменными.
 data Expr a
-  = Lit Int
-  | Var a
-  | Add (Expr a) (Expr a)
-  | Mul (Expr a) (Expr a)
+  = Lit Int                 -- ^ Целочисленный литерал.
+  | Var a                   -- ^ Переменная.
+  | Add (Expr a) (Expr a)   -- ^ Сложение.
+  | Mul (Expr a) (Expr a)   -- ^ Умножение.
   deriving (Show, Functor)
 
 -- | Класс 'Num' позволяет записывать выражения типа 'Expr' удобным образом.
@@ -34,12 +35,34 @@ instance Num (Expr a) where
   signum = error "not implemented"
   negate = error "not implemented"
 
+-- | Вычислить выражение с подставленными значениями переменных.
+--
+-- >>> eval (Add (Var 1) (Var 2))
+-- 3
+--
+-- >>> let x = Var 2
+-- >>> let y = Var 3
+-- >>> x + y
+-- Add (Var 2) (Var 3)
+-- >>> eval (x + y)
+-- 3
 eval :: Expr Int -> Int
 eval (Lit n) = n
 eval (Var n) = n
 eval (Add e1 e2) = eval e1 + eval e2
 eval (Mul e1 e2) = eval e1 * eval e2
 
+-- | Вычислить выражение, используя заданные значения переменных.
+--
+-- >>> let vars = [("x", 2), ("y", 3)]
+-- >>> evalWith 0 vars (Add (Var "x") (Var "y"))
+-- 5
+--
+-- >>> let x = Var "x"
+-- >>> let y = Var "y"
+-- >>> let z = Var "z"
+-- >>> evalWith 0 vars ((x + y)^2 + z)
+-- 25
 evalWith :: Eq var => Int -> [(var, Int)] -> Expr var -> Int
 evalWith def vars = eval . fmap valueOf
   where
@@ -47,13 +70,32 @@ evalWith def vars = eval . fmap valueOf
       Just n  -> n
       Nothing -> def
 
+-- | Перевести выражение в строковое представление.
+--
+-- >>> display (Mul (Var "x") (Add (Lit 1) (Var "y")))
+-- "(x) * (1 + y)"
+--
+-- >>> let x = Var "x"
+-- >>> let y = Var "y"
+-- >>> let z = Var "z"
+-- >>> display ((x + y)^2 + z)
+-- "(x + y) * (x + y) + z"
 display :: Expr String -> String
 display (Lit n) = show n
 display (Var s) = s
 display (Add e1 e2) = display e1 ++ " + " ++ display e2
 display (Mul e1 e2) = "(" ++ display e1 ++ ") * (" ++ display e2 ++ ")"
 
+-- | Перевести выражение в строковое представление,
+-- используя заданную функцию отображения переменных.
+--
+-- >>> displayWith show (Mul (Var "x") (Add (Lit 2) (Var "y")))
+-- "(\"x\") * (2 + \"y\")"
+--
+-- >>> let x = Var "x"
+-- >>> let y = Var "y"
+-- >>> displayWith display (Mul (Var (x + y)) (2 + Var (y^2)))
+-- "(x + y) * (2 + (y) * (y))"
 displayWith :: (var -> String) -> Expr var -> String
 displayWith displayVar = display . fmap displayVar
-
 
