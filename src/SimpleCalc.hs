@@ -8,6 +8,32 @@ data Expr a
   | Mul (Expr a) (Expr a)
   deriving (Show, Functor)
 
+-- | Класс 'Num' позволяет записывать выражения типа 'Expr' удобным образом.
+--
+-- Например, мы можем использовать целочисленные литералы:
+--
+-- >>> 1 + 2 :: Expr a
+-- Add (Lit 1) (Lit 2)
+--
+-- Или работать с переменными прямо в интерпретаторе:
+--
+-- >>> let x = Var "x"
+-- >>> 2 * x
+-- Mul (Lit 2) (Var "x")
+--
+-- Мы можем также использовать операции, которые используют класс типов 'Num':
+--
+-- >>> (x + y) ^ 2
+-- Mul (Add (Var "x") (Var "y")) (Add (Var "x") (Var "y"))
+instance Num (Expr a) where
+  e1 + e2 = Add e1 e2
+  e1 * e2 = Mul e1 e2
+  fromInteger n = Lit (fromInteger n)
+
+  abs    = error "not implemented"
+  signum = error "not implemented"
+  negate = error "not implemented"
+
 eval :: Expr Int -> Int
 eval (Lit n) = n
 eval (Var n) = n
