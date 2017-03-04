@@ -1,6 +1,12 @@
 {-# LANGUAGE DeriveFunctor #-}
 module SimpleCalc where
 
+-- $setup
+--
+-- >>> let x = Var "x"
+-- >>> let y = Var "y"
+-- >>> let z = Var "z"
+
 -- | Простое арифметическое выражение с переменными.
 data Expr a
   = Lit Int                 -- ^ Целочисленный литерал.
@@ -19,8 +25,10 @@ data Expr a
 -- Или работать с переменными прямо в интерпретаторе:
 --
 -- >>> let x = Var "x"
--- >>> 2 * x
--- Mul (Lit 2) (Var "x")
+-- >>> let y = Var "y"
+-- >>> let z = Var "z"
+-- >>> 2 * x + y * z
+-- Add (Mul (Lit 2) (Var "x")) (Mul (Var "y") (Var "z"))
 --
 -- Мы можем также использовать операции, которые используют класс типов 'Num':
 --
@@ -45,7 +53,7 @@ instance Num (Expr a) where
 -- >>> x + y
 -- Add (Var 2) (Var 3)
 -- >>> eval (x + y)
--- 3
+-- 5
 eval :: Expr Int -> Int
 eval (Lit n) = n
 eval (Var n) = n
@@ -75,9 +83,6 @@ evalWith def vars = eval . fmap valueOf
 -- >>> display (Mul (Var "x") (Add (Lit 1) (Var "y")))
 -- "(x) * (1 + y)"
 --
--- >>> let x = Var "x"
--- >>> let y = Var "y"
--- >>> let z = Var "z"
 -- >>> display ((x + y)^2 + z)
 -- "(x + y) * (x + y) + z"
 display :: Expr String -> String
@@ -92,10 +97,22 @@ display (Mul e1 e2) = "(" ++ display e1 ++ ") * (" ++ display e2 ++ ")"
 -- >>> displayWith show (Mul (Var "x") (Add (Lit 2) (Var "y")))
 -- "(\"x\") * (2 + \"y\")"
 --
--- >>> let x = Var "x"
--- >>> let y = Var "y"
 -- >>> displayWith display (Mul (Var (x + y)) (2 + Var (y^2)))
 -- "(x + y) * (2 + (y) * (y))"
 displayWith :: (var -> String) -> Expr var -> String
 displayWith displayVar = display . fmap displayVar
 
+-- | Подставить подвыражения вместе переменных в исходном выражении,
+-- используя заданные значения переменных.
+--
+-- >>> let unknown = Var "<unknown>"
+-- >>> let vars = [("x", y + z), ("y", x + 3)]
+--
+-- >>> display (expandVars unknown vars (x * y))
+-- "(y + z) * (x + 3)"
+--
+-- >>> display (expandVars unknown vars ((y + z) * (x + 3)))
+-- "(x + 3 + <unknown>) * (y + z + 3)"
+--
+-- expandVars :: ?
+-- expandVars = ?
